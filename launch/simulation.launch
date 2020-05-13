@@ -1,0 +1,16 @@
+<launch>
+    <!-- Establish connection with Gazebo -->
+    <include file="$(find stingray_launch)/launch/stingray_common.launch">
+        <arg name="simulation" default="true" />
+        <arg name="hardware_connection" default="false" />
+        <arg name="missions_enabled" value="false" />
+    </include>
+
+    <!-- Run object detector node -->
+    <include file="$(find sauvc_vision)/launch/object_detector.launch">
+        <arg name="cameras" value="false" />
+        <arg name="front_camera_topic" default="/camera/front/image" />
+        <arg name="bottom_camera_topic" default="/camera/bottom/image" />
+        <arg name="stream" default="true" />
+    </include>
+</launch>

@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-# https://www.pyimagesearch.com/2018/11/19/mask-r-cnn-with-opencv/
+#!/usr/bin/env python3
 
 import rospy
 import rospkg
