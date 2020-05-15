@@ -13,7 +13,7 @@ from sensor_msgs.msg import Image
 class object_detector:
     def __init__(self, front_camera_sub_topic, bottom_camera_sub_topic, confidence):
         node_name = rospy.get_name()
-        rospy.loginfo(node_name + "node initializing...")
+        rospy.loginfo(node_name + " node initializing...")
         # constants 
         rospack = rospkg.RosPack()
         path = rospack.get_path('sauvc_vision')
@@ -89,7 +89,7 @@ class object_detector:
             
     def callback(self,data):
         try:
-            rospy.loginfo("Callback")
+            rospy.loginfo("Object detector callback")
             # convert ROS image to OpenCV image
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
             # detect our objects

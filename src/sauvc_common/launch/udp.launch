@@ -1,0 +1,44 @@
+<launch>
+    <arg name="device_front" default="/dev/video0" />
+    <arg name="device_bottom" default="/dev/video2" />
+    <!-- Defines FPS -->
+    <arg name="fps" default="25" />
+    <!-- Enables or disables camera (in debug purposes -->
+    <arg name="cameras" default="true" />
+
+    <group if="$(arg cameras)">
+        <!-- Front camera interface node -->
+        <node name="front_camera" pkg="usb_cam" type="usb_cam_node" output="screen" respawn="true">
+            <param name="video_device" value="$(arg device_front)" />
+            <param name="image_width" value="640" />
+            <param name="image_height" value="480" />
+            <param name="pixel_format" value="yuyv" />
+            <param name="framerate" value="$(arg fps)" />
+            <param name="camera_name" value="front_camera" />
+            <param name="io_method" value="mmap"/>
+        </node>
+
+        <!-- Bottom camera interface node -->
+        <node name="bottom_camera" pkg="usb_cam" type="usb_cam_node" output="screen" respawn="true">
+            <param name="video_device" value="$(arg device_bottom)" />
+            <param name="image_width" value="640" />
+            <param name="image_height" value="480" />
+            <param name="pixel_format" value="yuyv" />
+            <param name="framerate" value="$(arg fps)" />
+            <param name="camera_name" value="bottom_camera" />
+            <param name="io_method" value="mmap"/>
+        </node>
+    </group>
+
+    <!-- Object detector node -->
+    <node name="object_detector" pkg="sauvc_vision" type="object_detector.py" output="screen" respawn="true">
+        <param name="front_camera_sub_topic" value="/front_camera/image_raw" />
+        <param name="bottom_camera_sub_topic" value="/bottom_camera/image_raw" />
+        <param name="dnn_pub_topic" value="/dnn/image" />
+        <param name="dnn_confidence" value="0.5" />
+    </node>
+
+    <node name="udp_bridge" pkg="sauvc_common" type="udp_bridge.py" output="screen" respawn="true">
+        
+    </node>
+</launch>

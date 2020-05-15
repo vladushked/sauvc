@@ -6,32 +6,36 @@ import rospy
 from sauvc_common.msg import Object 
 
 # udp setup
+qtReceiverIP = "127.0.0.5"
+qtReceiverPort = 1033
 rosSenderIP = "127.0.0.5"
-rosSenderPort = 1004
+rosSenderPort = 1034
 rosReceiverIP = "127.0.0.5"
-rosReceiverPort = 1005
+rosReceiverPort = 1035
 bufferSize  = 1024
 # Create a datagram socket
 RosSenderUDPSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 RosReceiverUDPSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 # to Qt
 is_exist = False
-x_start = 0
-y_start = 0
-x_end = 0
-y_end = 0
-x_center = 0
-y_center = 0
+x_start = 0.0
+y_start = 0.0
+x_end = 0.0
+y_end = 0.0
+x_center = 0.0
+y_center = 0.0
 # from qt
-linearVelosityX = 0
-linearVelosityY = 0
-linearVelosityZ = 0
-angularVelosityX = 0
-angularVelosityY = 0
-angularVelosityZ = 0
+linearVelosityX = 0.0
+linearVelosityY = 0.0
+linearVelosityZ = 0.0
+angularVelosityX = 0.0
+angularVelosityY = 0.0
+angularVelosityZ = 0.0
 
 
 def gate_callback(msg):
+    rospy.loginfo("Udp callback")
+    udp_receive()
     if msg.is_exist:
         is_exist = msg.is_exist
         x_start = msg.x_start
@@ -42,16 +46,21 @@ def gate_callback(msg):
         y_center = msg.y_center
     else:
         is_exist = False
-        x_start = 0
-        y_start = 0
-        x_end = 0
-        y_end = 0
-        x_center = 0
-        y_center = 0
+        x_start = 0.0
+        y_start = 0.0
+        x_end = 0.0
+        y_end = 0.0
+        x_center = 0.0
+        y_center = 0.0
     # make message
     messageToQt = struct.pack("?ffffff", is_exist, x_start, y_start, x_end, y_end, x_center, y_center)
     # send to qt
-    RosSenderUDPSocket.send(messageToQt)
+    RosSenderUDPSocket.sendto(messageToQt, (qtReceiverIP, qtReceiverPort))
+
+def udp_receive():
+    data, addr = RosReceiverUDPSocket.recvfrom(bufferSize)
+    linearVelosityX, linearVelosityY, linearVelosityZ, angularVelosityX, angularVelosityY, angularVelosityZ = struct.unpack("ffffff", data)
+    # rospy.loginfo(linearVelosityX, linearVelosityY, linearVelosityZ, angularVelosityX, angularVelosityY, angularVelosityZ)
 
 def udp_bridge():
     # init node
@@ -71,11 +80,3 @@ if __name__ == '__main__':
         rospy.spin()
     except rospy.ROSInterruptException:
         print("Shutting down")
-
-    # Listen for incoming datagrams
-    while not rospy.is_shutdown():
-
-        data, addr = RosReceiverUDPSocket.recvfrom(bufferSize)
-        linearVelosityX, linearVelosityY, linearVelosityZ, angularVelosityX, angularVelosityY, angularVelosityZ = struct.unpack("ffffff", data)
-        rospy.loginfo(linearVelosityX, linearVelosityY, linearVelosityZ, angularVelosityX, angularVelosityY, angularVelosityZ)
-        

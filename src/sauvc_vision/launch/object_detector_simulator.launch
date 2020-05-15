@@ -17,6 +17,8 @@
     <!-- Cameras image topics -->
     <arg name="front_camera_topic" default="/stereo/camera/left/image_raw" />
     <arg name="bottom_camera_topic" default="/ROV_model_URDF/camera_bottom/image_raw" />
+    <!-- Enables or disables camera (in debug purposes -->
+    <arg name="cameras" default="true" />
 
     <!-- Object detector node -->
     <node name="object_detector" pkg="sauvc_vision" type="object_detector.py" output="screen" respawn="true">
