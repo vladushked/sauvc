@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import rospy
 import rospkg
@@ -24,6 +24,11 @@ class object_detector:
         self.confidence = confidence
         self.labels = open(labels_path).read().strip().split("\n")
         self.colors = open(colors_path).read().strip().split("\n")
+        # init cv_bridge
+        self.bridge = CvBridge()
+        # load our NET from disk
+        self.cvNet = cv.dnn.readNetFromTensorflow(weights_path, config_path)
+        rospy.loginfo("Loading NET from disk...")
         # ROS Topic names
         gate_topic = node_name + "/gate"
         red_flare_topic = node_name + "/red_flare"
@@ -57,6 +62,7 @@ class object_detector:
         self.messages['blue_bowl'] = self.blue_bowl_message
         # subscribers
         self.image_sub = rospy.Subscriber(front_camera_sub_topic, Image, self.callback, queue_size=1)
+        rospy.loginfo("Init subscribers")
         # publishers
         self.gate_pub = rospy.Publisher(gate_topic, Object, queue_size=1)
         self.red_flare_pub = rospy.Publisher(red_flare_topic, Object, queue_size=1)
@@ -78,14 +84,12 @@ class object_detector:
         self.publishers['red_bowl_2'] = self.red_bowl_2_pub
         self.publishers['red_bowl_3'] = self.red_bowl_3_pub
         self.publishers['blue_bowl'] = self.blue_bowl_pub
-        # init cv_bridge
-        self.bridge = CvBridge()
-        # load our NET from disk
-        rospy.loginfo("Loading NET from disk...")
-        self.cvNet = cv.dnn.readNetFromTensorflow(weights_path, config_path)
+        rospy.loginfo("Init publishers")
+        
             
     def callback(self,data):
         try:
+            rospy.loginfo("Callback")
             # convert ROS image to OpenCV image
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
             # detect our objects
@@ -109,9 +113,11 @@ class object_detector:
             # publish image after dnn
             self.image_pub.publish(ros_image)
         except CvBridgeError as e:
-            print(e)
+            rospy.logerr(e)
+
 
     def detector(self, img):
+        rospy.loginfo("Run detector")
         # construct a blob from the input image and then perform a
         # forward pass, giving us the bounding box
         # coordinates of the objects in the image
