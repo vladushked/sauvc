@@ -31,58 +31,56 @@ x_center = 0.0
 y_center = 0.0
 
 # from qt
-linearPoseX = 1.0
-linearPoseY = 0.5
-linearPoseZ = 2.0
-angularPoseRoll = 1.5708
-angularPosePitch = 0.0
-angularPoseYaw = 1.5708
-linearVelosityX = 0.0
-linearVelosityY = 0.0
-linearVelosityZ = 0.0
-angularVelosityX = 0.0
-angularVelosityY = 0.0
-angularVelosityZ = 0.0
+X = 1.0 # Z
+Y = 0.5 # X
+Z = 2.0 # Y
+Roll = 1.5708
+Pitch = 0.0
+Yaw = 1.5708
+VelosityX = 0.0
+VelosityY = 0.0
+VelosityZ = 0.0
+VelosityRoll = 0.0
+VelosityPitch = 0.0
+VelosityYaw = 0.0
 
 # to simulator
 state_msg = ModelState()
 state_msg.model_name = 'ROV_model_URDF'
-state_msg.pose.position.x = 1.0
-state_msg.pose.position.y = 0.5
-state_msg.pose.position.z = 2.0
-state_msg.pose.orientation.x = 0.0
-state_msg.pose.orientation.y = 0.0
-state_msg.pose.orientation.z = 0.0
-state_msg.pose.orientation.w = 0.0
-state_msg.twist.linear.x = 0.0
-state_msg.twist.linear.y = 0.0
-state_msg.twist.linear.z = 0.0
-state_msg.twist.angular.x = 0.0
-state_msg.twist.angular.y = 0.0
-state_msg.twist.angular.z = 0.0
 
-def gate_callback(msg):
-    rospy.loginfo("Udp callback")
-    #udp_receive()
-    euler_to_quaternion()
-    set_model_service()
 
-    if msg.is_exist:
-        is_exist = msg.is_exist
-        x_start = msg.x_start
-        y_start = msg.y_start
-        x_end = msg.x_end
-        y_end = msg.y_end
-        x_center = msg.x_center
-        y_center = msg.y_center
-    else:
-        is_exist = False
-        x_start = 0.0
-        y_start = 0.0
-        x_end = 0.0
-        y_end = 0.0
-        x_center = 0.0
-        y_center = 0.0
+def set_model_state():
+    qx, qy, qz, qw = euler_to_quaternion(Roll, Pitch, Yaw)
+    state_msg.pose.position.x = X
+    state_msg.pose.position.y = Y
+    state_msg.pose.position.z = Z
+    state_msg.pose.orientation.x = qx
+    state_msg.pose.orientation.y = qy
+    state_msg.pose.orientation.z = qz
+    state_msg.pose.orientation.w = qw
+    state_msg.twist.linear.x = VelosityX
+    state_msg.twist.linear.y = VelosityY
+    state_msg.twist.linear.z = VelosityZ
+    state_msg.twist.angular.x = VelosityRoll
+    state_msg.twist.angular.y = VelosityPitch
+    state_msg.twist.angular.z = VelosityYaw
+    rospy.loginfo("set_model_state")
+    rospy.wait_for_service('/gazebo/set_model_state')
+    try:
+        set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+        resp = set_state( state_msg )
+    except rospy.ServiceException, e:
+        print "Service call failed: %s" % e
+
+def euler_to_quaternion(Roll, Pitch, Yaw):
+    qx = np.sin(Roll/2) * np.cos(Pitch/2) * np.cos(Yaw/2) - np.cos(Roll/2) * np.sin(Pitch/2) * np.sin(Yaw/2)
+    qy = np.cos(Roll/2) * np.sin(Pitch/2) * np.cos(Yaw/2) + np.sin(Roll/2) * np.cos(Pitch/2) * np.sin(Yaw/2)
+    qz = np.cos(Roll/2) * np.cos(Pitch/2) * np.sin(Yaw/2) - np.sin(Roll/2) * np.sin(Pitch/2) * np.cos(Yaw/2)
+    qw = np.cos(Roll/2) * np.cos(Pitch/2) * np.cos(Yaw/2) + np.sin(Roll/2) * np.sin(Pitch/2) * np.sin(Yaw/2)
+
+    return (qx, qy, qz, qw)
+
+def udp_send(is_exist, x_start, y_start, x_end, y_end, x_center, y_center):
     # make message
     messageToQt = struct.pack("?ffffff", is_exist, x_start, y_start, x_end, y_end, x_center, y_center)
     # send to qt
@@ -91,46 +89,29 @@ def gate_callback(msg):
 def udp_receive():
     rospy.loginfo("udp_receive")
     data, addr = RosReceiverUDPSocket.recvfrom(bufferSize)
-    state_msg.twist.linear.x, 
-    state_msg.twist.linear.y, 
-    state_msg.twist.linear.z, 
-    state_msg.twist.angular.x, 
-    state_msg.twist.angular.y, 
-    state_msg.twist.angular.z = struct.unpack("ffffff", data)
+    Z, X, Yaw, VelosityZ, VelosityX, VelosityYaw = struct.unpack("ffffff", data)
+    set_model_state()
 
-def set_model_service():
-    rospy.loginfo("set_model_service")
+def gate_callback(msg):
+    rospy.loginfo("Udp callback")
+    udp_send(msg.is_exist, msg.x_start, msg.y_start, msg.x_end, msg.y_end, msg.x_center, msg.y_center)
 
-    rospy.wait_for_service('/gazebo/set_model_state')
-    try:
-        set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-        resp = set_state( state_msg )
-    except rospy.ServiceException, e:
-        print "Service call failed: %s" % e
-
-def euler_to_quaternion():
-    state_msg.pose.orientation.x = np.sin(angularPoseRoll/2) * np.cos(angularPosePitch/2) * np.cos(angularPoseYaw/2) - np.cos(angularPoseRoll/2) * np.sin(angularPosePitch/2) * np.sin(angularPoseYaw/2)
-    state_msg.pose.orientation.y = np.cos(angularPoseRoll/2) * np.sin(angularPosePitch/2) * np.cos(angularPoseYaw/2) + np.sin(angularPoseRoll/2) * np.cos(angularPosePitch/2) * np.sin(angularPoseYaw/2)
-    state_msg.pose.orientation.z = np.cos(angularPoseRoll/2) * np.cos(angularPosePitch/2) * np.sin(angularPoseYaw/2) - np.sin(angularPoseRoll/2) * np.sin(angularPosePitch/2) * np.cos(angularPoseYaw/2)
-    state_msg.pose.orientation.w = np.cos(angularPoseRoll/2) * np.cos(angularPosePitch/2) * np.cos(angularPoseYaw/2) + np.sin(angularPoseRoll/2) * np.sin(angularPosePitch/2) * np.sin(angularPoseYaw/2)
-
-def udp_bridge():
+def init_udp_bridge():
     # init node
     rospy.init_node('udp_bridge')
     rospy.loginfo("udp_bridge node started")
-    # subscribers init
-    gate_sub = rospy.Subscriber("/object_detector/gate", Object, gate_callback, queue_size=1) 
-    # init position
-
-
-if __name__ == '__main__':
     # Bind to address and ip
     RosSenderUDPSocket.bind((rosSenderIP, rosSenderPort))
     RosReceiverUDPSocket.bind((rosReceiverIP, rosReceiverPort))
     rospy.loginfo("UDP up")
+    # init timer
+    timer = rospy.Timer(rospy.Duration(1), udp_receive())
+    # subscribers init
+    gate_sub = rospy.Subscriber("/object_detector/gate", Object, gate_callback, queue_size=1) 
 
+if __name__ == '__main__':
     try:
-        udp_bridge()
+        init_udp_bridge()
         rospy.spin()
     except rospy.ROSInterruptException:
-        print("Shutting down")
+        print("Shutting down UDP bridge")
