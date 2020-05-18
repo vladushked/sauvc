@@ -15,7 +15,7 @@ rosSenderIP = "127.0.0.5"
 rosSenderPort = 1034
 rosReceiverIP = "127.0.0.5"
 rosReceiverPort = 1035
-bufferSize  = 1024
+bufferSize  = 24
 
 # Create a datagram socket
 RosSenderUDPSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -31,25 +31,18 @@ x_center = 0.0
 y_center = 0.0
 
 # from qt
-X = 1.0 # Z
 Y = 0.5 # X
-Z = 2.0 # Y
 Roll = 1.5708
 Pitch = 0.0
-Yaw = 1.5708
-VelosityX = 0.0
 VelosityY = 0.0
-VelosityZ = 0.0
 VelosityRoll = 0.0
 VelosityPitch = 0.0
-VelosityYaw = 0.0
 
 # to simulator
 state_msg = ModelState()
 state_msg.model_name = 'ROV_model_URDF'
 
-
-def set_model_state():
+def set_model_state(Z, X, Yaw, VelosityZ, VelosityX, VelosityYaw):
     qx, qy, qz, qw = euler_to_quaternion(Roll, Pitch, Yaw)
     state_msg.pose.position.x = X
     state_msg.pose.position.y = Y
@@ -87,13 +80,16 @@ def udp_send(is_exist, x_start, y_start, x_end, y_end, x_center, y_center):
     RosSenderUDPSocket.sendto(messageToQt, (qtReceiverIP, qtReceiverPort))
 
 def udp_receive():
-    rospy.loginfo("udp_receive")
-    data, addr = RosReceiverUDPSocket.recvfrom(bufferSize)
-    Z, X, Yaw, VelosityZ, VelosityX, VelosityYaw = struct.unpack("ffffff", data)
-    set_model_state()
+    # rospy.loginfo("udp_receive")
+    data, addr = RosReceiverUDPSocket.recvfrom(1024)
+    receivedZ, receivedX, receivedYaw, receivedVelosityZ, receivedVelosityX, receivedVelosityYaw = struct.unpack("ffffff", data)
+    print(receivedZ, receivedX, receivedYaw, receivedVelosityZ, receivedVelosityX, receivedVelosityYaw)
+    #set_model_state(receivedZ, receivedX, receivedYaw, receivedVelosityZ, receivedVelosityX, receivedVelosityYaw)
+    # timer = rospy.Timer(rospy.Duration(0.1), udp_receive(), oneshot=True)
+
 
 def gate_callback(msg):
-    rospy.loginfo("Udp callback")
+    # udp_receive()
     udp_send(msg.is_exist, msg.x_start, msg.y_start, msg.x_end, msg.y_end, msg.x_center, msg.y_center)
 
 def init_udp_bridge():
@@ -104,10 +100,14 @@ def init_udp_bridge():
     RosSenderUDPSocket.bind((rosSenderIP, rosSenderPort))
     RosReceiverUDPSocket.bind((rosReceiverIP, rosReceiverPort))
     rospy.loginfo("UDP up")
-    # init timer
-    timer = rospy.Timer(rospy.Duration(1), udp_receive())
     # subscribers init
     gate_sub = rospy.Subscriber("/object_detector/gate", Object, gate_callback, queue_size=1) 
+    
+    r = rospy.Rate(100) # 10hz
+    while not rospy.is_shutdown():
+        udp_receive()
+        r.sleep()
+    
 
 if __name__ == '__main__':
     try:

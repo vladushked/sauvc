@@ -28,7 +28,7 @@ class object_detector:
         self.bridge = CvBridge()
         # load our NET from disk
         self.cvNet = cv.dnn.readNetFromTensorflow(weights_path, config_path)
-        rospy.loginfo("Loading NET from disk...")
+        rospy.loginfo(node_name + "Loading NET from disk...")
         # ROS Topic names
         gate_topic = node_name + "/gate"
         red_flare_topic = node_name + "/red_flare"
@@ -62,7 +62,7 @@ class object_detector:
         self.messages['blue_bowl'] = self.blue_bowl_message
         # subscribers
         self.image_sub = rospy.Subscriber(front_camera_sub_topic, Image, self.callback, queue_size=1)
-        rospy.loginfo("Init subscribers")
+        rospy.loginfo(node_name + "Init subscribers")
         # publishers
         self.gate_pub = rospy.Publisher(gate_topic, Object, queue_size=1)
         self.red_flare_pub = rospy.Publisher(red_flare_topic, Object, queue_size=1)
@@ -84,12 +84,12 @@ class object_detector:
         self.publishers['red_bowl_2'] = self.red_bowl_2_pub
         self.publishers['red_bowl_3'] = self.red_bowl_3_pub
         self.publishers['blue_bowl'] = self.blue_bowl_pub
-        rospy.loginfo("Init publishers")
+        rospy.loginfo(node_name + "Init publishers")
         
             
     def callback(self,data):
         try:
-            rospy.loginfo("Object detector callback")
+            # rospy.loginfo("Object detector callback")
             # convert ROS image to OpenCV image
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
             # detect our objects
@@ -117,7 +117,7 @@ class object_detector:
 
 
     def detector(self, img):
-        rospy.loginfo("Run detector")
+        # rospy.loginfo("Run detector")
         # construct a blob from the input image and then perform a
         # forward pass, giving us the bounding box
         # coordinates of the objects in the image
