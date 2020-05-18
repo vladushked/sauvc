@@ -84,7 +84,7 @@ def udp_receive():
     data, addr = RosReceiverUDPSocket.recvfrom(1024)
     receivedZ, receivedX, receivedYaw, receivedVelosityZ, receivedVelosityX, receivedVelosityYaw = struct.unpack("ffffff", data)
     print(receivedZ, receivedX, receivedYaw, receivedVelosityZ, receivedVelosityX, receivedVelosityYaw)
-    #set_model_state(receivedZ, receivedX, receivedYaw, receivedVelosityZ, receivedVelosityX, receivedVelosityYaw)
+    set_model_state(receivedZ, receivedX, receivedYaw, receivedVelosityZ, receivedVelosityX, receivedVelosityYaw)
     # timer = rospy.Timer(rospy.Duration(0.1), udp_receive(), oneshot=True)
 
 
@@ -103,7 +103,7 @@ def init_udp_bridge():
     # subscribers init
     gate_sub = rospy.Subscriber("/object_detector/gate", Object, gate_callback, queue_size=1) 
     
-    r = rospy.Rate(100) # 10hz
+    r = rospy.Rate(50) # 10hz
     while not rospy.is_shutdown():
         udp_receive()
         r.sleep()

@@ -28,6 +28,9 @@ class object_detector:
         self.bridge = CvBridge()
         # load our NET from disk
         self.cvNet = cv.dnn.readNetFromTensorflow(weights_path, config_path)
+        # set target to GPU
+        self.cvNet.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
+        self.cvNet.setPreferableTarget(cv.dnn.DNN_TARGET_CUDA)
         rospy.loginfo(node_name + "Loading NET from disk...")
         # ROS Topic names
         gate_topic = node_name + "/gate"
@@ -117,7 +120,7 @@ class object_detector:
 
 
     def detector(self, img):
-        # rospy.loginfo("Run detector")
+        rospy.loginfo("Run detector")
         # construct a blob from the input image and then perform a
         # forward pass, giving us the bounding box
         # coordinates of the objects in the image
