@@ -1,4 +1,4 @@
-gate
+zaglushka
 gate
 red_flare
 yellow_flare_1

@@ -98,6 +98,7 @@ class object_detector:
             # detect our objects
             objects = self.detector(cv_image)
             # publish object coordinates and existance
+            print(objects)
             for key in objects.keys():
                 obj = objects.get(key)
                 self.messages[key].name = obj.get('name')
@@ -138,7 +139,7 @@ class object_detector:
             object_confidence = cvOut[0, 0, i, 2]
             object_id = i
             object_label_id = int(cvOut[0, 0, i, 1])
-            if object_confidence >= self.confidence:
+            if (object_confidence >= self.confidence)&(object_label_id):
                 key = self.labels[object_label_id]
                 if objects.get(key):
                     if  object_confidence > objects.get(key)[2]:
@@ -149,6 +150,7 @@ class object_detector:
                     objects[key] = object_id, object_label_id, object_confidence
         for key in objects.keys():
             id, label_id, confidence = objects.pop(key)
+            print(id, label_id, confidence)
             rows = img.shape[0]
             cols = img.shape[1]
             box = cvOut[0, 0, id, 3:7] * np.array([cols, rows, cols, rows])
@@ -177,7 +179,7 @@ class object_detector:
             cv.rectangle(img, (obj['x_start'], obj['y_start']), (obj['x_end'], obj['y_end']), (173,255,47), 4)  
             # draw the predicted label and associated probability of the
             # instance segmentation on the image
-            text = obj['name'] + str(obj['confidence'])
+            text = obj['name'] + str(obj['confidence']*100)
             cv.putText(img, text, (obj['x_start'], obj['y_start'] + 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (173,255,47), 2)
         
         return img
@@ -193,4 +195,3 @@ if __name__ == '__main__':
         rospy.spin()
     except rospy.ROSInterruptException:
         print("Shutting down")
-    cv.destroyAllWindows()
