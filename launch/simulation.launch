@@ -11,7 +11,7 @@
         <arg name="cameras" value="false" />
         <arg name="front_camera_topic" default="/stereo/camera/left/image_raw" />
         <arg name="bottom_camera_topic" default="/ROV_model_URDF/camera_bottom/image_raw" />
-        <arg name="stream" default="false" />
+        <arg name="stream" default="true" />
     </include>
 
     <node name="udp_bridge" pkg="sauvc_common" type="udp_bridge.py" output="screen" respawn="true"/>

@@ -29,8 +29,8 @@ class object_detector:
         # load our NET from disk
         self.cvNet = cv.dnn.readNetFromTensorflow(weights_path, config_path)
         # set target to GPU
-        self.cvNet.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
-        self.cvNet.setPreferableTarget(cv.dnn.DNN_TARGET_CUDA)
+        #self.cvNet.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
+        #self.cvNet.setPreferableTarget(cv.dnn.DNN_TARGET_CUDA)
         rospy.loginfo(node_name + "Loading NET from disk...")
         # ROS Topic names
         gate_topic = node_name + "/gate"
